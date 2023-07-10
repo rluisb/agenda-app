@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"reflect"
 	"testing"
 )
 
@@ -22,6 +23,14 @@ func TestCreateContactBadRequest_NoNameProvided(t *testing.T) {
 
 	sut.handle(w, r)
 	if w.Code != http.StatusBadRequest {
-		t.Errorf("Expected status code %v, got %v", http.StatusBadRequest, w.Code)
+		t.Errorf("Expected status code %v, got %v with body", http.StatusBadRequest, w.Code)
+	}
+	if w.Code == http.StatusBadRequest {
+		expected := map[string]string{"message": "name is required"}
+		var responseBody map[string]string
+		json.Unmarshal(w.Body.Bytes(), &responseBody)
+		if reflect.DeepEqual(expected, responseBody) != true {
+			t.Errorf("Expected response body %v, got %v", expected, responseBody)
+		}
 	}
 }
