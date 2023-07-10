@@ -10,7 +10,7 @@ import (
 )
 
 func TestCreateContactBadRequest_MissingRequiredField(t *testing.T) {
-	sut := NewContactController()
+	sut := NewCreateContactController()
 	type Contact struct {
 		Name         string
 		Email        string
@@ -48,7 +48,7 @@ func TestCreateContactBadRequest_MissingRequiredField(t *testing.T) {
 		r.Header.Set("Content-Type", "application/json")
 		w := httptest.NewRecorder()
 
-		sut.CreateContact(w, r)
+		sut.handle(w, r)
 		if w.Code != http.StatusBadRequest {
 			t.Errorf("Expected status code %v, got %v with body", http.StatusBadRequest, w.Code)
 		}

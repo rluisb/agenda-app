@@ -7,13 +7,13 @@ import (
 	"github.com/rluisb/agenda-app/src/presentation/helpers"
 )
 
-type ContactController struct{}
+type CreateContactController struct{}
 
-func NewContactController() *ContactController {
-	return &ContactController{}
+func NewCreateContactController() *CreateContactController {
+	return &CreateContactController{}
 }
 
-func (c ContactController) CreateContact(w http.ResponseWriter, r *http.Request) {
+func (c CreateContactController) handle(w http.ResponseWriter, r *http.Request) {
 	var body map[string]string
 	requiredFields := []string{"Name", "Email", "Phone", "Address"}
 	json.NewDecoder(r.Body).Decode(&body)
