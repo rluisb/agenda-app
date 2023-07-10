@@ -15,15 +15,14 @@ func NewContactController() *ContactController {
 
 func (c ContactController) handle(w http.ResponseWriter, r *http.Request) {
 	var body map[string]string
+	requiredFields := []string{"Name", "Email", "Phone", "Address"}
 	json.NewDecoder(r.Body).Decode(&body)
-	if body["name"] == "" {
-		httpResponse := helpers.BadRequest("name")
-		w.WriteHeader(httpResponse.StatusCode)
-		json.NewEncoder(w).Encode(httpResponse.Body)
-	}
-	if body["email"] == "" {
-		httpResponse := helpers.BadRequest("email")
-		w.WriteHeader(httpResponse.StatusCode)
-		json.NewEncoder(w).Encode(httpResponse.Body)
+	for _, field := range requiredFields {
+		if body[field] == "" {
+			httpResponse := helpers.BadRequest(field)
+			w.WriteHeader(httpResponse.StatusCode)
+			json.NewEncoder(w).Encode(httpResponse.Body)
+			return
+		}
 	}
 }

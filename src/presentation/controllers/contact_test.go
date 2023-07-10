@@ -9,54 +9,56 @@ import (
 	"testing"
 )
 
-func TestCreateContactBadRequest_NoNameProvided(t *testing.T) {
+func TestCreateContactBadRequest_MissingRequiredField(t *testing.T) {
 	sut := NewContactController()
-	body, _ := json.Marshal(map[string]string{
-		"email":   "john.doe@mail.com",
-		"phone":   "1234567890",
-		"address": "123 Main St",
-	})
-	r, _ := http.NewRequest("POST", "http://localhost:8080/contacts", bytes.NewBuffer(body))
-	r.Header.Set("Content-Type", "application/json")
-
-	w := httptest.NewRecorder()
-
-	sut.handle(w, r)
-	if w.Code != http.StatusBadRequest {
-		t.Errorf("Expected status code %v, got %v with body", http.StatusBadRequest, w.Code)
+	type Contact struct {
+		Name         string
+		Email        string
+		Phone        string
+		Address      string
 	}
-	if w.Code == http.StatusBadRequest {
-		expected := map[string]string{"message": "name is required"}
-		var responseBody map[string]string
-		json.Unmarshal(w.Body.Bytes(), &responseBody)
-		if reflect.DeepEqual(expected, responseBody) != true {
-			t.Errorf("Expected response body %v, got %v", expected, responseBody)
+
+
+	table := map[string]Contact{
+		"name": {
+			Email:        "john.doe@mail.com",
+			Phone:        "1234567890",
+			Address:      "123 Main St",
+		},
+		"email": {
+			Name:         "john.doe",
+			Phone:        "1234567890",
+			Address:      "123 Main St",
+		},
+		"phone": {
+			Name:         "john.doe",
+			Email:        "john.doe@mail.com",
+			Address:      "123 Main St",
+		},
+		"address": {
+			Name:         "john.doe",
+			Email:        "john.doe@mail.com",
+			Phone:        "1234567890",
+		},
+	}
+
+	for missingField, contact := range table {
+		body, _ := json.Marshal(contact)
+		r, _ := http.NewRequest("POST", "http://localhost:8080/contacts", bytes.NewBuffer(body))
+		r.Header.Set("Content-Type", "application/json")
+		w := httptest.NewRecorder()
+
+		sut.handle(w, r)
+		if w.Code != http.StatusBadRequest {
+			t.Errorf("Expected status code %v, got %v with body", http.StatusBadRequest, w.Code)
 		}
-	}
-}
-
-func TestCreateContactBadRequest_NoEmailProvided(t *testing.T) {
-	sut := NewContactController()
-	body, _ := json.Marshal(map[string]string{
-		"name":   "john.doe",
-		"phone":   "1234567890",
-		"address": "123 Main St",
-	})
-	r, _ := http.NewRequest("POST", "http://localhost:8080/contacts", bytes.NewBuffer(body))
-	r.Header.Set("Content-Type", "application/json")
-
-	w := httptest.NewRecorder()
-
-	sut.handle(w, r)
-	if w.Code != http.StatusBadRequest {
-		t.Errorf("Expected status code %v, got %v with body", http.StatusBadRequest, w.Code)
-	}
-	if w.Code == http.StatusBadRequest {
-		expected := map[string]string{"message": "email is required"}
-		var responseBody map[string]string
-		json.Unmarshal(w.Body.Bytes(), &responseBody)
-		if reflect.DeepEqual(expected, responseBody) != true {
-			t.Errorf("Expected response body %v, got %v", expected, responseBody)
+		if w.Code == http.StatusBadRequest {
+			expected := map[string]string{"message": missingField + " is required"}
+			var responseBody map[string]string
+			json.Unmarshal(w.Body.Bytes(), &responseBody)
+			if reflect.DeepEqual(expected, responseBody) != true {
+				t.Errorf("Expected response body %v, got %v", expected, responseBody)
+			}
 		}
 	}
 }
