@@ -48,7 +48,7 @@ func TestCreateContactBadRequest_MissingRequiredField(t *testing.T) {
 		r.Header.Set("Content-Type", "application/json")
 		w := httptest.NewRecorder()
 
-		sut.handle(w, r)
+		sut.CreateContact(w, r)
 		if w.Code != http.StatusBadRequest {
 			t.Errorf("Expected status code %v, got %v with body", http.StatusBadRequest, w.Code)
 		}

@@ -13,7 +13,7 @@ func NewContactController() *ContactController {
 	return &ContactController{}
 }
 
-func (c ContactController) handle(w http.ResponseWriter, r *http.Request) {
+func (c ContactController) CreateContact(w http.ResponseWriter, r *http.Request) {
 	var body map[string]string
 	requiredFields := []string{"Name", "Email", "Phone", "Address"}
 	json.NewDecoder(r.Body).Decode(&body)
