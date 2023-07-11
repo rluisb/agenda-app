@@ -49,5 +49,12 @@ func (c CreateContactController) handle(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	c.AddContact.Add(usecases.NewAddContactModel(body["Name"], body["Email"], body["Phone"], body["Address"]))
+	_, err = c.AddContact.Add(usecases.NewAddContactModel(body["Name"], body["Email"], body["Phone"], body["Address"]))
+	if err != nil {
+		errorMessage := custom_errors.NewInternalServerError().Build()
+		httpResponse := helpers.InternalServerError(errorMessage)
+		w.WriteHeader(httpResponse.StatusCode)
+		json.NewEncoder(w).Encode(httpResponse.Body)
+		return
+	}
 }
