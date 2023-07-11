@@ -49,7 +49,7 @@ func (c CreateContactController) handle(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	_, err = c.AddContact.Add(usecases.NewAddContactModel(body["Name"], body["Email"], body["Phone"], body["Address"]))
+	newContact, err := c.AddContact.Add(usecases.NewAddContactModel(body["Name"], body["Email"], body["Phone"], body["Address"]))
 	if err != nil {
 		errorMessage := custom_errors.NewInternalServerError().Build()
 		httpResponse := helpers.InternalServerError(errorMessage)
@@ -57,4 +57,8 @@ func (c CreateContactController) handle(w http.ResponseWriter, r *http.Request) 
 		json.NewEncoder(w).Encode(httpResponse.Body)
 		return
 	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Location", "http://localhost:8080/contacts/" + newContact.ID)
+	w.WriteHeader(http.StatusCreated)
 }
