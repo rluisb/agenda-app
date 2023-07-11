@@ -184,15 +184,21 @@ func TestCreateContactWithSuccess(t *testing.T) {
 	w := httptest.NewRecorder()
 
 	sut.handle(w, r)
-	if w.Code != http.StatusOK {
-		t.Errorf("Expected status code %v, got %v with body", http.StatusOK, w.Code)
+	if w.Code != http.StatusCreated {
+		t.Errorf("Expected status code %v, got %v with body", http.StatusCreated, w.Code)
 	}
-	if w.Code == http.StatusOK {
+	if w.Code == http.StatusCreated {
 		expectedResponse := map[string]string{}
 		var responseBody map[string]string
 		json.Unmarshal(w.Body.Bytes(), &responseBody)
 		if len(responseBody) == 0 &&  len(expectedResponse) == 0 && len(responseBody) == len(expectedResponse) != true {
 			t.Errorf("Expected response body %v, got %v", expectedResponse, expectedResponse)
+		}
+		if w.Header()["Content-Type"][0] != "application/json" {
+			t.Errorf("Expected response header Content-Type to be application/json, got %v", w.HeaderMap["Content-Type"][0])
+		}
+		if w.Header()["Location"][0] != "http://localhost:8080/contacts/1" {
+			t.Errorf("Expected response header Location to be http://localhost:8080/contacts/1, got %v", w.HeaderMap["Location"])
 		}
 		if emailValidatorSpy.CallCount != 1 {
 			t.Errorf("Expected email validator to have been called 1 time, got %v", emailValidatorSpy.CallCount)
