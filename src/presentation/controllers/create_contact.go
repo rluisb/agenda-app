@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/rluisb/agenda-app/src/domain/usecases"
 	"github.com/rluisb/agenda-app/src/presentation/custom_errors"
 	"github.com/rluisb/agenda-app/src/presentation/helpers"
 	"github.com/rluisb/agenda-app/src/presentation/protocols"
@@ -12,10 +13,11 @@ import (
 
 type CreateContactController struct{
 	EmailValidator protocols.EmailValidator
+	AddContact usecases.AddContact
 }
 
-func NewCreateContactController(emailValidator protocols.EmailValidator) *CreateContactController {
-	return &CreateContactController{emailValidator}
+func NewCreateContactController(emailValidator protocols.EmailValidator, addContact usecases.AddContact) *CreateContactController {
+	return &CreateContactController{emailValidator, addContact}
 }
 
 func (c CreateContactController) handle(w http.ResponseWriter, r *http.Request) {
@@ -46,4 +48,6 @@ func (c CreateContactController) handle(w http.ResponseWriter, r *http.Request) 
 		json.NewEncoder(w).Encode(httpResponse.Body)
 		return
 	}
+
+	c.AddContact.Add(usecases.NewAddContactModel(body["Name"], body["Email"], body["Phone"], body["Address"]))
 }
