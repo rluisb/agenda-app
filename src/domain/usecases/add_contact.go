@@ -19,5 +19,5 @@ func NewAddContactModel(name string, email string, phone string, address string)
 }
 
 type AddContact interface {
-	Add(contact *AddContactModel) *models.ContactModel
+	Add(contact *AddContactModel) (*models.ContactModel, error)
 }
