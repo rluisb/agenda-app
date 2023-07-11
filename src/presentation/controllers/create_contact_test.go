@@ -9,8 +9,12 @@ import (
 	"testing"
 )
 
+func makeSut() *CreateContactController {
+	return NewCreateContactController()
+}
+
 func TestCreateContactBadRequest_MissingRequiredField(t *testing.T) {
-	sut := NewCreateContactController()
+	sut := makeSut()
 	type Contact struct {
 		Name         string
 		Email        string
