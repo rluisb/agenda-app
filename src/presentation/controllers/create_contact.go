@@ -31,7 +31,15 @@ func (c CreateContactController) handle(w http.ResponseWriter, r *http.Request) 
 			return
 		}
 	}
-	if !c.EmailValidator.IsValid(body["Email"]) {
+	isValid, err := c.EmailValidator.IsValid(body["Email"])
+	if err != nil {
+		errorMessage := custom_errors.NewInternalServerError().Build()
+		httpResponse := helpers.InternalServerError(errorMessage)
+		w.WriteHeader(httpResponse.StatusCode)
+		json.NewEncoder(w).Encode(httpResponse.Body)
+		return
+	}
+	if !isValid {
 		errorMessage := custom_errors.NewInvalidParamError(strings.ToLower("Email")).Build()
 		httpResponse := helpers.BadRequest(errorMessage)
 		w.WriteHeader(httpResponse.StatusCode)

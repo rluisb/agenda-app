@@ -9,3 +9,7 @@ import (
 func BadRequest(message map[string]string) *protocols.HttpResponse {
 	return protocols.NewHttpResponse(http.StatusBadRequest, message)
 }
+
+func InternalServerError(message map[string]string) *protocols.HttpResponse {
+	return protocols.NewHttpResponse(http.StatusInternalServerError, message)
+}
