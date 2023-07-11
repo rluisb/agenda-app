@@ -110,7 +110,7 @@ func TestCreateContactBadRequest_InvalidEmailProvided(t *testing.T) {
 	}
 }
 
-func TestCreateContactInternalServerError_IfEmailValidatorThrows(t *testing.T) {
+func TestCreateContactInternalServerError_IfEmailValidatorFails(t *testing.T) {
 	emailValidatorSpy := NewGenericSpy()
 	IsValid = func(email string) (bool, error) {
 		emailValidatorSpy.CallCount++
@@ -144,7 +144,7 @@ func TestCreateContactInternalServerError_IfEmailValidatorThrows(t *testing.T) {
 	}
 }
 
-var add func(contact *usecases.AddContactModel) *models.ContactModel
+var add func(contact *usecases.AddContactModel) (*models.ContactModel, error)
 
 type AddContactStub struct {
 }
@@ -153,13 +153,13 @@ func NewAddContactStub() AddContactStub {
 	return AddContactStub{}
 }
 
-func (a AddContactStub) Add(contact *usecases.AddContactModel) *models.ContactModel {
+func (a AddContactStub) Add(contact *usecases.AddContactModel) (*models.ContactModel, error) {
 	return add(contact)
 }
 
 func TestCreateContactWithSuccess(t *testing.T) {
 	addAccountSpy := NewGenericSpy()
-	add = func(contact *usecases.AddContactModel) *models.ContactModel {
+	add = func(contact *usecases.AddContactModel) (*models.ContactModel, error){
 		addAccountSpy.CallCount++
 		addAccountSpy.CalledWith = contact
 		return &models.ContactModel{
@@ -168,7 +168,7 @@ func TestCreateContactWithSuccess(t *testing.T) {
 			Email:   contact.Email,
 			Phone:   contact.Phone,
 			Address: contact.Address,
-		}
+		}, nil
 	}
 	emailValidatorSpy := NewGenericSpy()
 	IsValid = func(email string) (bool, error) {
@@ -188,12 +188,58 @@ func TestCreateContactWithSuccess(t *testing.T) {
 		t.Errorf("Expected status code %v, got %v with body", http.StatusOK, w.Code)
 	}
 	if w.Code == http.StatusOK {
-		var responseBody models.ContactModel
+		expectedResponse := map[string]string{}
+		var responseBody map[string]string
 		json.Unmarshal(w.Body.Bytes(), &responseBody)
-		// if reflect.DeepEqual(contact, responseBody) != true {
-		// 	t.Errorf("Expected response body %v, got %v", contact, responseBody)
-		// }
+		if len(responseBody) == 0 &&  len(expectedResponse) == 0 && len(responseBody) == len(expectedResponse) != true {
+			t.Errorf("Expected response body %v, got %v", expectedResponse, expectedResponse)
+		}
+		if emailValidatorSpy.CallCount != 1 {
+			t.Errorf("Expected email validator to have been called 1 time, got %v", emailValidatorSpy.CallCount)
+		}
+		if reflect.DeepEqual(contact.Email, emailValidatorSpy.CalledWith) != true {
+			t.Errorf("Expected email validator to have been called with %v, got %v", contact.Email, emailValidatorSpy.CalledWith)
+		}
+		if addAccountSpy.CallCount != 1 {
+			t.Errorf("Expected add account to have been called 1 time, got %v", addAccountSpy.CallCount)
+		}
+		if reflect.DeepEqual(contact, addAccountSpy.CalledWith) != true {
+			t.Errorf("Expected add account to been called with %v, got %v", contact, addAccountSpy.CalledWith)
+		}
+	}
+}
 
+func TestCreateContactInternalServerError_IfAccContactFails(t *testing.T) {
+	addAccountSpy := NewGenericSpy()
+	add = func(contact *usecases.AddContactModel) (*models.ContactModel, error) {
+		addAccountSpy.CallCount++
+		addAccountSpy.CalledWith = contact
+		return nil, errors.New("something went wrong")
+	}
+	emailValidatorSpy := NewGenericSpy()
+	IsValid = func(email string) (bool, error) {
+		emailValidatorSpy.CallCount++
+		emailValidatorSpy.CalledWith = email
+		return true, nil
+	}
+	sut := makeSut()
+	contact := usecases.NewAddContactModel("John Doe", "invalid_email@mail.com", "1234567890", "123 Main St")
+	body, _ := json.Marshal(contact)
+	r, _ := http.NewRequest("POST", "http://localhost:8080/contacts", bytes.NewBuffer(body))
+	r.Header.Set("Content-Type", "application/json")
+	w := httptest.NewRecorder()
+
+	sut.handle(w, r)
+	if w.Code != http.StatusInternalServerError {
+		t.Errorf("Expected status code %v, got %v with body", http.StatusBadRequest, w.Code)
+	}
+	if w.Code == http.StatusInternalServerError {
+		expectedResponse := map[string]string{"message": "internal server error"}
+		var responseBody map[string]string
+		json.Unmarshal(w.Body.Bytes(), &responseBody)
+		if reflect.DeepEqual(expectedResponse, responseBody) != true {
+			t.Errorf("Expected response body %v, got %v", expectedResponse, responseBody)
+		}
 		if emailValidatorSpy.CallCount != 1 {
 			t.Errorf("Expected email validator to have been called 1 time, got %v", emailValidatorSpy.CallCount)
 		}
