@@ -1,6 +1,7 @@
 package usecases
 
 import (
+	"errors"
 	"testing"
 
 	"github.com/rluisb/agenda-app/src/domain/usecases"
@@ -46,6 +47,28 @@ func TestDbAddContact(t *testing.T) {
 		}
 		if addContactRepositorySpy.CalledWith != addContactModel {
 			t.Errorf("Expected called with to be %v, but got %v", addContactModel, addContactRepositorySpy.CalledWith)
+		}
+	})
+
+	t.Run("Should return error if AddContactRepository return error", func(t *testing.T) {
+		addContactRepositorySpy := NewGenericSpy()
+		Add = func(addContactModel *usecases.AddContactModel) (*models.ContactModel, error) {
+			addContactRepositorySpy.CallCount++
+			addContactRepositorySpy.CalledWith = addContactModel
+			return nil, errors.New("something went wrong")
+		}
+		addContactRepositoryStub := NewAddContactRepositoryStub()
+		sut := NewDbAddContact(addContactRepositoryStub)
+		addContactModel := usecases.NewAddContactModel("John Doe", "john.doe@mail.com", "1234567890", "123 Main St")
+		_, err := sut.Add(addContactModel)
+		if addContactRepositorySpy.CallCount != 1 {
+			t.Errorf("Expected call count to be 1, but got %d", addContactRepositorySpy.CallCount)
+		}
+		if addContactRepositorySpy.CalledWith != addContactModel {
+			t.Errorf("Expected called with to be %v, but got %v", addContactModel, addContactRepositorySpy.CalledWith)
+		}
+		if err == nil {
+			t.Errorf("Expected error to be returned")
 		}
 	})
 }
