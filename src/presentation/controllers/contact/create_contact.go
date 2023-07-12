@@ -59,6 +59,6 @@ func (c CreateContactController) handle(w http.ResponseWriter, r *http.Request) 
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	w.Header().Set("Location", "http://localhost:8080/contacts/" + newContact.ID)
-	w.WriteHeader(http.StatusCreated)
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(newContact)
 }
