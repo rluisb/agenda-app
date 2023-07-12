@@ -56,23 +56,25 @@ func TestCreateContactBadRequest_MissingRequiredField(t *testing.T) {
 	}
 
 	for missingField, contact := range table {
-		body, _ := json.Marshal(contact)
-		r, _ := http.NewRequest("POST", "http://localhost:8080/contacts", bytes.NewBuffer(body))
-		r.Header.Set("Content-Type", "application/json")
-		w := httptest.NewRecorder()
+		t.Run("Should return badRequest when " + missingField + " is missing", func(t *testing.T) {
+			body, _ := json.Marshal(contact)
+			r, _ := http.NewRequest("POST", "http://localhost:8080/contacts", bytes.NewBuffer(body))
+			r.Header.Set("Content-Type", "application/json")
+			w := httptest.NewRecorder()
 
-		sut.handle(w, r)
-		if w.Code != http.StatusBadRequest {
-			t.Errorf("Expected status code %v, got %v with body", http.StatusBadRequest, w.Code)
-		}
-		if w.Code == http.StatusBadRequest {
-			expected := map[string]string{"message": missingField + " is required"}
-			var responseBody map[string]string
-			json.Unmarshal(w.Body.Bytes(), &responseBody)
-			if reflect.DeepEqual(expected, responseBody) != true {
-				t.Errorf("Expected response body %v, got %v", expected, responseBody)
+			sut.handle(w, r)
+			if w.Code != http.StatusBadRequest {
+				t.Errorf("Expected status code %v, got %v with body", http.StatusBadRequest, w.Code)
 			}
-		}
+			if w.Code == http.StatusBadRequest {
+				expected := map[string]string{"message": missingField + " is required"}
+				var responseBody map[string]string
+				json.Unmarshal(w.Body.Bytes(), &responseBody)
+				if reflect.DeepEqual(expected, responseBody) != true {
+					t.Errorf("Expected response body %v, got %v", expected, responseBody)
+				}
+			}
+		})
 	}
 }
 
