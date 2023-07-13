@@ -5,7 +5,6 @@ import (
 	"reflect"
 	"testing"
 
-	_ "github.com/mattn/go-sqlite3"
 	"github.com/rluisb/agenda-app/src/domain/usecases"
 	"github.com/rluisb/agenda-app/src/domain/usecases/models"
 )
