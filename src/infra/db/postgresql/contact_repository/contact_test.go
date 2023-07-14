@@ -2,6 +2,7 @@ package contactrepository
 
 import (
 	"database/sql"
+	"errors"
 	"reflect"
 	"testing"
 
@@ -49,7 +50,7 @@ func (s SqlResultStub) RowsAffected() (int64, error) {
 	return RowsAffected()
 }
 
-func TestContactPostgresRepository(t *testing.T) {
+func TestAddContactPostgresRepository(t *testing.T) {
 	t.Run("Should return a contact model with an ID", func(t *testing.T) {
 		postgresExecSpy := NewGenericSpy()
 		Exec = func(query string, args ...interface{}) (sql.Result, error) {
@@ -75,6 +76,26 @@ func TestContactPostgresRepository(t *testing.T) {
 		}
 		if reflect.DeepEqual(expectedContactModel, contact) != true{
 			t.Errorf("Expected contact to be %v, got %v", expectedContactModel, contact)
+		}
+	}) 
+
+	t.Run("Should return an error when inserting data", func(t *testing.T) {
+		postgresExecSpy := NewGenericSpy()
+		Exec = func(query string, args ...interface{}) (sql.Result, error) {
+			postgresExecSpy.CallCount++
+			postgresExecSpy.CalledWith = query
+			return nil, errors.New("Error inserting data")
+		}
+		
+		postgresStub := NewPostgresStub(&sql.DB{})
+		sut := NewContactPostgresRepository(postgresStub)
+		addContactModel := usecases.NewAddContactModel("John Doe", "john.doe@mail.com", "1234567890", "123 Main St")
+		contact, err := sut.Add(addContactModel)
+		if err == nil {
+			t.Errorf("Expected error to be not nil, got %v", err)
+		}
+		if contact != nil {
+			t.Errorf("Expected contact to be nil, got %v", contact)
 		}
 	}) 
 }
