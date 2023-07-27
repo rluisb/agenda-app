@@ -8,7 +8,7 @@ import (
 	"github.com/rluisb/agenda-app/src/domain/usecases"
 	"github.com/rluisb/agenda-app/src/presentation/custom_errors"
 	"github.com/rluisb/agenda-app/src/presentation/helpers"
-	"github.com/rluisb/agenda-app/src/presentation/protocols"
+	"github.com/rluisb/agenda-app/src/validation/protocols"
 )
 
 type CreateContactController struct{
