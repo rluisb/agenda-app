@@ -91,3 +91,47 @@ func (handler *ContactHandler) HandleDeleteContact(w http.ResponseWriter, r *htt
 	w.WriteHeader(http.StatusNoContent)
 }
 
+func (handler *ContactHandler) HandleUpdateContact(w http.ResponseWriter, r *http.Request) {
+	id := r.URL.Query().Get("id")		
+
+	existingContact, err := handler.ContactStore.GetContactByID(r.Context(), id)
+	if err != nil {
+		w.WriteHeader(http.StatusNotFound)
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(helper.NewCustomError(err))
+		return
+	}
+	
+	var params types.UpdateContactParams
+	if err := json.NewDecoder(r.Body).Decode(&params); err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(helper.NewCustomError(err))
+		return
+	}
+
+	if params.Name != "" {
+		existingContact.Name = params.Name
+	}
+	if params.Phone != "" {
+		existingContact.Phone = params.Phone
+	}
+	if params.Email != "" {
+		existingContact.Email = params.Email
+	}
+	if params.Address != "" {
+		existingContact.Address = params.Address
+	}
+
+	updatedContact, err := handler.ContactStore.UpdateContact(r.Context(), id, existingContact)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(helper.NewCustomError(err))
+		return
+	}
+	w.WriteHeader(http.StatusOK)
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(updatedContact)	
+}
+

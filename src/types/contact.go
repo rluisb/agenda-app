@@ -34,6 +34,13 @@ func (params CreateContactParams) Validate() map[string]string {
 	return errors
 }
 
+type UpdateContactParams struct {
+	Name    string `json:"name"`
+	Phone   string `json:"phone"`
+	Email   string `json:"email"`
+	Address string `json:"address"`
+}
+
 type Contact struct {
 	ID        string `bson:"_id,omitempty" json:"id,omitempty"`
 	Name			string `bson:"name" json:"name"`

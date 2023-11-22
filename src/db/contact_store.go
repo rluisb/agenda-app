@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/rluisb/agenda-app/src/helper"
 	"github.com/rluisb/agenda-app/src/types"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -21,6 +22,7 @@ type ContactStore interface {
 	GetContacts(context.Context, *types.GetContactsListQueryParams) ([]*types.Contact, error)
 	CreateContact(context.Context, *types.Contact) (*types.Contact, error)
 	DeleteContact(context.Context, string) error
+	UpdateContact(context.Context, string, *types.Contact) (*types.Contact, error)
 }
 
 type MongoContactStore struct {
@@ -30,14 +32,47 @@ type MongoContactStore struct {
 
 func NewMongoContactStore(client *mongo.Client) *MongoContactStore {
 	collection  := client.Database(DBNAME).Collection(contactColl)
-	indexModel := mongo.IndexModel{
+	namePhoneEmailIndex := mongo.IndexModel{
     Keys: bson.D{
         {"name", 1},
         {"phone", 1},
 				{"email", 1},
     }, Options: options.Index().SetUnique(true),
 }
-	name, err := collection.Indexes().CreateOne(context.Background(), indexModel)
+	name, err := collection.Indexes().CreateOne(context.Background(), namePhoneEmailIndex)
+	if err != nil {
+		panic(err)
+	}
+	log.Printf("Created index %s", name)
+
+	nameIndex := mongo.IndexModel{
+    Keys: bson.D{
+        {"name", 1},
+    }, Options: options.Index().SetUnique(true),
+}
+	name, err = collection.Indexes().CreateOne(context.Background(), nameIndex)
+	if err != nil {
+		panic(err)
+	}
+	log.Printf("Created index %s", name)
+
+	phoneIndex := mongo.IndexModel{
+    Keys: bson.D{
+        {"phone", 1},
+    }, Options: options.Index().SetUnique(true),
+}
+	name, err = collection.Indexes().CreateOne(context.Background(), phoneIndex)
+	if err != nil {
+		panic(err)
+	}
+	log.Printf("Created index %s", name)
+
+	emailIndex := mongo.IndexModel{
+    Keys: bson.D{
+        {"email", 1},
+    }, Options: options.Index().SetUnique(true),
+}
+	name, err = collection.Indexes().CreateOne(context.Background(), emailIndex)
 	if err != nil {
 		panic(err)
 	}
@@ -51,7 +86,6 @@ func NewMongoContactStore(client *mongo.Client) *MongoContactStore {
 func (s *MongoContactStore) GetContacts(ctx context.Context, queryParams *types.GetContactsListQueryParams) ([]*types.Contact, error) {
 	var contacts []*types.Contact
 
-	log.Printf("Query params: %+v", queryParams)
 	deletedAtQuery := bson.M{"$eq": 0}
 	if(!queryParams.Active) {
 		deletedAtQuery = bson.M{"$ne": 0}		
@@ -104,7 +138,8 @@ func (s *MongoContactStore) CreateContact(ctx context.Context, contact *types.Co
 	res, err := s.coll.InsertOne(ctx, contact)
 	if err != nil {
 		if strings.Contains(err.Error(), "E11000") {
-			return nil, errors.New("contact with name, phone and email already exists")
+			errorMessage := helper.ParseMongoError(err.Error())
+			return nil, errors.New(errorMessage)
 		}
 		return nil, err
 	}
@@ -123,6 +158,21 @@ func (s *MongoContactStore) DeleteContact(ctx context.Context, id string) error 
 		return err
 	}
 	return nil
+}
+
+func (s *MongoContactStore) UpdateContact(ctx context.Context, id string, contact *types.Contact) (*types.Contact, error) {
+	oid, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		return nil, errors.New("invalid id")
+	}
+	currentTime := time.Now().Unix()
+	contact.UpdatedAt = currentTime
+	_, err = s.coll.UpdateByID(ctx, bson.M{"_id": oid}, bson.M{"$set": contact}, options.Update().SetUpsert(false))
+	if err != nil {
+		return nil, err
+	}
+	contact.ID = id
+	return contact, nil
 }
 
 
