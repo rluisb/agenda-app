@@ -1,7 +1,6 @@
 package types
 
 import (
-	"errors"
 	"net/mail"
 )
 
@@ -12,27 +11,26 @@ type CreateContactParams struct {
 	Address string `json:"address"`
 }
 
-func (params CreateContactParams) Validate() error {
+func (params CreateContactParams) Validate() map[string]string {
+	errors := map[string]string{}
 	if params.Name == "" {
-		return errors.New("name is required")
+		errors["name"] = "name is required"
 	}
 	if params.Phone == "" {
-		return errors.New("phone is required")
+		errors["phone"] = "phone is required"
 	}
 	if params.Email == "" {
-		return errors.New("email is required")
+		errors["email"] = "email is required"
 	}
 	_, err := mail.ParseAddress(params.Email)
 	if err != nil {
-		return errors.New("invalid email")
+		errors["email"] = "email is invalid"
 	}
 	if params.Address == "" {
-		return errors.New("address is required")
+		errors["address"] = "address is required"
 	}
-	return nil
+	return errors
 }
-
-
 
 type Contact struct {
 	ID        string `bson:"_id,omitempty" json:"id,omitempty"`
@@ -40,16 +38,16 @@ type Contact struct {
 	Phone			string `bson:"phone" json:"phone"`
 	Email			string `bson:"email" json:"email"`
 	Address		string `bson:"address" json:"address"`
+	CreatedAt int64  `bson:"created_at" json:"-"`
+	UpdatedAt int64  `bson:"updated_at" json:"-"`
+	DeletedAt int64  `bson:"deleted_at" json:"-"`
 }
 
-func NewContactFromParams(params CreateContactParams) (*Contact, error) {
-	if err := params.Validate(); err != nil {
-		return nil, err
-	}
+func NewContactFromParams(params CreateContactParams) *Contact {
 	return &Contact{
 		Name: params.Name,
 		Phone: params.Phone,
 		Email: params.Email,
 		Address: params.Address,
-	}, nil
+	}
 }

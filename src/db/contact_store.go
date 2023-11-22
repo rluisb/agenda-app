@@ -3,6 +3,7 @@ package db
 import (
 	"context"
 	"errors"
+	"time"
 
 	"github.com/rluisb/agenda-app/src/types"
 	"go.mongodb.org/mongo-driver/bson"
@@ -16,6 +17,7 @@ type ContactStore interface {
 	GetContactByID(context.Context, string) (*types.Contact, error)
 	GetContacts(context.Context) ([]*types.Contact, error)
 	CreateContact(context.Context, *types.Contact) (*types.Contact, error)
+	DeleteContact(context.Context, string) error
 }
 
 type MongoContactStore struct {
@@ -58,12 +60,28 @@ func (s *MongoContactStore) GetContactByID(ctx context.Context, id string) (*typ
 }
 
 func (s *MongoContactStore) CreateContact(ctx context.Context, contact *types.Contact) (*types.Contact, error) {
+	currentTime := time.Now().Unix()
+	contact.CreatedAt = currentTime
+	contact.UpdatedAt = currentTime
 	res, err := s.coll.InsertOne(ctx, contact)
 	if err != nil {
 		return nil, err
 	}
 	contact.ID = res.InsertedID.(primitive.ObjectID).Hex()
 	return contact, nil
+}
+
+func (s *MongoContactStore) DeleteContact(ctx context.Context, id string) error {
+	oid, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		return errors.New("invalid id")
+	}
+	currentTime := time.Now().Unix()
+	_, err = s.coll.UpdateByID(ctx, bson.M{"_id": oid}, bson.M{"$set": bson.M{"updated_at": currentTime, "deleted_at": currentTime}})
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 

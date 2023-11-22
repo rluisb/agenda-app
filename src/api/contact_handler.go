@@ -31,13 +31,14 @@ func (handler *ContactHandler) HandlePostContact(w http.ResponseWriter, r *http.
 		json.NewEncoder(w).Encode(helper.NewCustomError(err))
 		return
 	}
-	contact, err := types.NewContactFromParams(params)
-	if err != nil {
+	if errors := params.Validate(); len(errors) > 0 {
 		w.WriteHeader(http.StatusBadRequest)
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(helper.NewCustomError(err))
+		json.NewEncoder(w).Encode(errors)
 		return
 	}
+
+	contact := types.NewContactFromParams(params)
 	insertedContact, err := handler.ContactStore.CreateContact(r.Context(), contact)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -76,5 +77,18 @@ func (handler *ContactHandler) HandleGetContact(w http.ResponseWriter, r *http.R
 	w.WriteHeader(http.StatusOK)
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(user)
+}
+
+func (handler *ContactHandler) HandleDeleteContact(w http.ResponseWriter, r *http.Request) {
+	id := r.URL.Query().Get("id")		
+
+	err := handler.ContactStore.DeleteContact(r.Context(), id)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(helper.NewCustomError(err))
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
 }
 

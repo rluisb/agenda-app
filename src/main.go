@@ -35,6 +35,8 @@ func main() {
 			contactHandler.HandleListContacts(w, r)
 		case http.MethodPost:
 			contactHandler.HandlePostContact(w, r)
+		case http.MethodDelete:
+			contactHandler.HandleDeleteContact(w, r)
 		default:
 			w.WriteHeader(http.StatusMethodNotAllowed)
 		}
