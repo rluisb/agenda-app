@@ -2,6 +2,8 @@ package types
 
 import (
 	"net/mail"
+	"net/url"
+	"strconv"
 )
 
 type CreateContactParams struct {
@@ -50,4 +52,25 @@ func NewContactFromParams(params CreateContactParams) *Contact {
 		Email: params.Email,
 		Address: params.Address,
 	}
+}
+
+type GetContactsListQueryParams struct {
+	Name string
+	Active bool
+}
+
+func NewGetContactsListQueryParams(queryParams url.Values) *GetContactsListQueryParams {
+	params := &GetContactsListQueryParams{}
+	name := queryParams.Get("name")
+	if name != "" {
+		params.Name = name
+	}
+
+	active := queryParams.Get("active")
+	if active != "" {
+		params.Active, _ = strconv.ParseBool(active)
+	} else {
+		params.Active = true
+	}
+	return params
 }

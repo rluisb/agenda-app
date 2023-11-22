@@ -18,7 +18,7 @@ const contactColl = "contacts"
 
 type ContactStore interface {
 	GetContactByID(context.Context, string) (*types.Contact, error)
-	GetContacts(context.Context, string) ([]*types.Contact, error)
+	GetContacts(context.Context, *types.GetContactsListQueryParams) ([]*types.Contact, error)
 	CreateContact(context.Context, *types.Contact) (*types.Contact, error)
 	DeleteContact(context.Context, string) error
 }
@@ -48,31 +48,31 @@ func NewMongoContactStore(client *mongo.Client) *MongoContactStore {
 	}
 }
 
-func (s *MongoContactStore) GetContacts(ctx context.Context, name string) ([]*types.Contact, error) {
+func (s *MongoContactStore) GetContacts(ctx context.Context, queryParams *types.GetContactsListQueryParams) ([]*types.Contact, error) {
 	var contacts []*types.Contact
 
-	if name != "" {
-		cursor, err := s.coll.Find(ctx, bson.D{{
-			Key: "name", Value: primitive.Regex{Pattern: name, Options: "i"},
-		}, {
-			Key: "deleted_at", Value: 0,
-		}}, options.Find().SetSort(bson.D{{Key: "name", Value: 1}}))
-
-		if err != nil {
-			return nil, err
-		}
-		if cursor.RemainingBatchLength() == 0 {
-			return []*types.Contact{}, nil
-		}
-		if err := cursor.All(ctx, &contacts); err != nil {
-			return nil, err
-		}
-		return contacts, nil
+	log.Printf("Query params: %+v", queryParams)
+	deletedAtQuery := bson.M{"$eq": 0}
+	if(!queryParams.Active) {
+		deletedAtQuery = bson.M{"$ne": 0}		
 	}
 
-	cursor, err := s.coll.Find(ctx, bson.M{
-		"deleted_at": 0,
-	})
+	query := bson.D{{
+			Key: "name", Value: primitive.Regex{Pattern: queryParams.Name, Options: "i"},
+		}, {
+			Key: "deleted_at", Value: deletedAtQuery,
+	}}
+
+	if queryParams.Name == "" {
+		query = bson.D{{
+			Key: "deleted_at", Value: deletedAtQuery,
+		}}
+	}
+
+	queryOptions := options.Find().SetSort(bson.D{{Key: "name", Value: 1}})
+	
+
+	cursor, err := s.coll.Find(ctx, query, queryOptions)
 	if err != nil {
 		return nil, err
 	}

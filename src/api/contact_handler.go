@@ -9,9 +9,7 @@ import (
 	"github.com/rluisb/agenda-app/src/types"
 )
 
-type CustomError struct {
-	Error string `json:"error"`
-}
+
 
 type ContactHandler struct {
 	ContactStore db.ContactStore
@@ -52,8 +50,8 @@ func (handler *ContactHandler) HandlePostContact(w http.ResponseWriter, r *http.
 }
 
 func (handler *ContactHandler) HandleListContacts(w http.ResponseWriter, r *http.Request) {
-	name := r.URL.Query().Get("name")
-	users, err := handler.ContactStore.GetContacts(r.Context(), name)
+	queryParams := types.NewGetContactsListQueryParams(r.URL.Query())
+	users, err := handler.ContactStore.GetContacts(r.Context(), queryParams)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Header().Set("Content-Type", "application/json")
