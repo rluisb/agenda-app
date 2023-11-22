@@ -3,6 +3,7 @@ package api
 import (
 	"encoding/json"
 	"net/http"
+	"strings"
 
 	"github.com/rluisb/agenda-app/src/db"
 	"github.com/rluisb/agenda-app/src/helper"
@@ -39,6 +40,12 @@ func (handler *ContactHandler) HandlePostContact(w http.ResponseWriter, r *http.
 	contact := types.NewContactFromParams(params)
 	insertedContact, err := handler.ContactStore.CreateContact(r.Context(), contact)
 	if err != nil {
+		if strings.Contains(err.Error(), "already exists") {
+			w.WriteHeader(http.StatusConflict)
+			w.Header().Set("Content-Type", "application/json")
+			json.NewEncoder(w).Encode(helper.NewCustomError(err))
+			return	
+		}
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(helper.NewCustomError(err))
@@ -93,16 +100,8 @@ func (handler *ContactHandler) HandleDeleteContact(w http.ResponseWriter, r *htt
 
 func (handler *ContactHandler) HandleUpdateContact(w http.ResponseWriter, r *http.Request) {
 	id := r.URL.Query().Get("id")		
-
-	existingContact, err := handler.ContactStore.GetContactByID(r.Context(), id)
-	if err != nil {
-		w.WriteHeader(http.StatusNotFound)
-		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(helper.NewCustomError(err))
-		return
-	}
 	
-	var params types.UpdateContactParams
+	var params *types.UpdateContactParams
 	if err := json.NewDecoder(r.Body).Decode(&params); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		w.Header().Set("Content-Type", "application/json")
@@ -110,20 +109,20 @@ func (handler *ContactHandler) HandleUpdateContact(w http.ResponseWriter, r *htt
 		return
 	}
 
-	if params.Name != "" {
-		existingContact.Name = params.Name
+	err := handler.ContactStore.UpdateContact(r.Context(), id, params)
+	if err != nil {
+		if strings.Contains(err.Error(), "already exists") {
+			w.WriteHeader(http.StatusConflict)
+			w.Header().Set("Content-Type", "application/json")
+			json.NewEncoder(w).Encode(helper.NewCustomError(err))
+			return	
+		}
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(helper.NewCustomError(err))
+		return
 	}
-	if params.Phone != "" {
-		existingContact.Phone = params.Phone
-	}
-	if params.Email != "" {
-		existingContact.Email = params.Email
-	}
-	if params.Address != "" {
-		existingContact.Address = params.Address
-	}
-
-	updatedContact, err := handler.ContactStore.UpdateContact(r.Context(), id, existingContact)
+	updatedContact, err := handler.ContactStore.GetContactByID(r.Context(), id)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Header().Set("Content-Type", "application/json")
@@ -133,5 +132,41 @@ func (handler *ContactHandler) HandleUpdateContact(w http.ResponseWriter, r *htt
 	w.WriteHeader(http.StatusOK)
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(updatedContact)	
+}
+
+func (handler *ContactHandler) HandlePatchContact(w http.ResponseWriter, r *http.Request) {
+	id := r.URL.Query().Get("id")		
+	
+	var params *types.UpdateContactParams
+	if err := json.NewDecoder(r.Body).Decode(&params); err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(helper.NewCustomError(err))
+		return
+	}
+
+	err := handler.ContactStore.PatchContact(r.Context(), id, params)
+	if err != nil {
+		if strings.Contains(err.Error(), "already exists") {
+			w.WriteHeader(http.StatusConflict)
+			w.Header().Set("Content-Type", "application/json")
+			json.NewEncoder(w).Encode(helper.NewCustomError(err))
+			return	
+		}
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(helper.NewCustomError(err))
+		return
+	}
+	patchedContact, err := handler.ContactStore.GetContactByID(r.Context(), id)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(helper.NewCustomError(err))
+		return
+	}
+	w.WriteHeader(http.StatusOK)
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(patchedContact)	
 }
 

@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"log"
-	"strings"
 	"time"
 
 	"github.com/rluisb/agenda-app/src/helper"
@@ -22,7 +21,9 @@ type ContactStore interface {
 	GetContacts(context.Context, *types.GetContactsListQueryParams) ([]*types.Contact, error)
 	CreateContact(context.Context, *types.Contact) (*types.Contact, error)
 	DeleteContact(context.Context, string) error
-	UpdateContact(context.Context, string, *types.Contact) (*types.Contact, error)
+	UpdateContact(context.Context, string, *types.UpdateContactParams) error
+	PatchContact(context.Context, string, *types.UpdateContactParams) error
+	Exists(context.Context, bson.M) (bool, error)
 }
 
 type MongoContactStore struct {
@@ -45,38 +46,6 @@ func NewMongoContactStore(client *mongo.Client) *MongoContactStore {
 	}
 	log.Printf("Created index %s", name)
 
-	nameIndex := mongo.IndexModel{
-    Keys: bson.D{
-        {"name", 1},
-    }, Options: options.Index().SetUnique(true),
-}
-	name, err = collection.Indexes().CreateOne(context.Background(), nameIndex)
-	if err != nil {
-		panic(err)
-	}
-	log.Printf("Created index %s", name)
-
-	phoneIndex := mongo.IndexModel{
-    Keys: bson.D{
-        {"phone", 1},
-    }, Options: options.Index().SetUnique(true),
-}
-	name, err = collection.Indexes().CreateOne(context.Background(), phoneIndex)
-	if err != nil {
-		panic(err)
-	}
-	log.Printf("Created index %s", name)
-
-	emailIndex := mongo.IndexModel{
-    Keys: bson.D{
-        {"email", 1},
-    }, Options: options.Index().SetUnique(true),
-}
-	name, err = collection.Indexes().CreateOne(context.Background(), emailIndex)
-	if err != nil {
-		panic(err)
-	}
-	log.Printf("Created index %s", name)
 	return &MongoContactStore{
 		client: client,
 		coll: collection,
@@ -137,7 +106,7 @@ func (s *MongoContactStore) CreateContact(ctx context.Context, contact *types.Co
 	contact.UpdatedAt = currentTime
 	res, err := s.coll.InsertOne(ctx, contact)
 	if err != nil {
-		if strings.Contains(err.Error(), "E11000") {
+		if mongo.IsDuplicateKeyError(err) {
 			errorMessage := helper.ParseMongoError(err.Error())
 			return nil, errors.New(errorMessage)
 		}
@@ -160,20 +129,99 @@ func (s *MongoContactStore) DeleteContact(ctx context.Context, id string) error 
 	return nil
 }
 
-func (s *MongoContactStore) UpdateContact(ctx context.Context, id string, contact *types.Contact) (*types.Contact, error) {
+func (s *MongoContactStore) UpdateContact(ctx context.Context, id string, updateContactParams *types.UpdateContactParams) error {
 	oid, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
-		return nil, errors.New("invalid id")
+		return errors.New("invalid id")
 	}
-	currentTime := time.Now().Unix()
-	contact.UpdatedAt = currentTime
-	_, err = s.coll.UpdateByID(ctx, bson.M{"_id": oid}, bson.M{"$set": contact}, options.Update().SetUpsert(false))
+	filter := bson.M{"_id": oid}
+	update := bson.M{
+		"$set": bson.M{
+			"name": updateContactParams.Name,
+			"phone": updateContactParams.Phone,
+			"email": updateContactParams.Email,
+			"address": updateContactParams.Address,
+			"updated_at": time.Now().Unix(),
+		},
+	} 
+	exists, err := s.Exists(ctx, bson.M{
+		"name": updateContactParams.Name,
+		"phone": updateContactParams.Phone,
+		"email": updateContactParams.Email,
+	})
 	if err != nil {
-		return nil, err
+		return err
 	}
-	contact.ID = id
-	return contact, nil
+	if exists {
+		return errors.New("contact already exists")
+	}
+	result, err := s.coll.UpdateOne(ctx, filter, update)
+	if err != nil {
+		if mongo.IsDuplicateKeyError(err) {
+			errorMessage := helper.ParseMongoError(err.Error())
+			return errors.New(errorMessage)
+		}
+		return err
+	}
+	if result.MatchedCount == 0 {
+		return errors.New("contact not found")
+	}
+	return nil
 }
 
+func (s *MongoContactStore) PatchContact(ctx context.Context, id string, updateContactParams *types.UpdateContactParams) error {	
+	oid, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		return errors.New("invalid id")
+	}
+	filter := bson.M{"_id": oid}
+	update := bson.M{
+		"$set": bson.M{
+			"updated_at": time.Now().Unix(),
+		},
+	} 
+	if updateContactParams.Name != "" {
+		update["$set"].(bson.M)["name"] = updateContactParams.Name
+	}
+	if updateContactParams.Phone != "" {
+		update["$set"].(bson.M)["phone"] = updateContactParams.Phone
+	}
+	if updateContactParams.Email != "" {
+		update["$set"].(bson.M)["email"] = updateContactParams.Email
+	}
+	if updateContactParams.Address != "" {
+		update["$set"].(bson.M)["address"] = updateContactParams.Address
+	}
+	exists, err := s.Exists(ctx, bson.M{
+		"name": updateContactParams.Name,
+		"phone": updateContactParams.Phone,
+		"email": updateContactParams.Email,
+	})
+	if err != nil {
+		return err
+	}
+	if exists {
+		return errors.New("contact already exists")
+	}
+	result, err := s.coll.UpdateOne(ctx, filter, update)
+	if err != nil {
+		if mongo.IsDuplicateKeyError(err) {
+			errorMessage := helper.ParseMongoError(err.Error())
+			return errors.New(errorMessage)
+		}
+		return err
+	}
+	if result.MatchedCount == 0 {
+		return errors.New("contact not found")
+	}
+	return nil
+}
 
+func (s *MongoContactStore) Exists(ctx context.Context, query bson.M) (bool, error) {
+	count, err := s.coll.CountDocuments(ctx, query)
+	if err != nil {
+		return false, err
+	}
+	return count > 0, nil
+}
 

@@ -39,6 +39,8 @@ func main() {
 			contactHandler.HandleDeleteContact(w, r)
 		case http.MethodPut:
 			contactHandler.HandleUpdateContact(w, r)
+		case http.MethodPatch:
+			contactHandler.HandlePatchContact(w, r)
 		default:
 			w.WriteHeader(http.StatusMethodNotAllowed)
 		}
