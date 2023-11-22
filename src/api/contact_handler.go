@@ -52,7 +52,8 @@ func (handler *ContactHandler) HandlePostContact(w http.ResponseWriter, r *http.
 }
 
 func (handler *ContactHandler) HandleListContacts(w http.ResponseWriter, r *http.Request) {
-	users, err := handler.ContactStore.GetContacts(r.Context())
+	name := r.URL.Query().Get("name")
+	users, err := handler.ContactStore.GetContacts(r.Context(), name)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Header().Set("Content-Type", "application/json")
