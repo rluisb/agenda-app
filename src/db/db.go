@@ -1,4 +1,4 @@
 package db
 
 const DBNAME = "agenda"
-const DBURI = "mongodb://root:root@localhost:27017"
+const DBURI = "mongodb://localhost:27017/?ssl=false&authSource=admin"

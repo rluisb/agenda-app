@@ -5,9 +5,11 @@ import (
 	"flag"
 	"log"
 	"net/http"
+	"os"
 
 	"github.com/rluisb/agenda-app/src/api"
 	"github.com/rluisb/agenda-app/src/db"
+	"github.com/rluisb/agenda-app/src/types"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
@@ -16,7 +18,15 @@ func main() {
 	listenAddrs := flag.String("listen", ":8080", "The listen address of the API server")
 	flag.Parse()
 
-	client, err := mongo.Connect(context.TODO(), options.Client().ApplyURI(db.DBURI))
+	args := types.Args{
+		Conn: db.DBURI,
+	}
+	if conn := os.Getenv("DB_CONN"); conn != "" {
+		log.Printf("Using DB_CONN env variable: %s", conn)
+		args.Conn = conn
+	}
+
+	client, err := mongo.Connect(context.TODO(), options.Client().ApplyURI(args.Conn))
 	if err != nil {
 		log.Fatal(err)
 	}

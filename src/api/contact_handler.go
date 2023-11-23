@@ -75,6 +75,12 @@ func (handler *ContactHandler) HandleGetContact(w http.ResponseWriter, r *http.R
 
 	user, err := handler.ContactStore.GetContactByID(r.Context()	, id)
 	if err != nil {
+		if strings.Contains(err.Error(), "not found") {
+			w.WriteHeader(http.StatusNotFound)
+			w.Header().Set("Content-Type", "application/json")
+			json.NewEncoder(w).Encode(helper.NewCustomError(err))
+			return
+		}
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(helper.NewCustomError(err))

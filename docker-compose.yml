@@ -1,8 +1,25 @@
 version: "3.1"
 
 services:
-  mongo:
+  database:
     image: mongo
+    container_name: database
     restart: always
     ports:
       - 27017:27017
+    volumes:
+      - "shared_volume:/data/db"
+  api:
+    build: .
+    ports:
+      - 8080:8080
+    links:
+      - database
+    depends_on:
+      - database
+    restart: on-failure
+    environment:
+      DB_CONN: "mongodb://database:27017/?ssl=false&authSource=admin"
+
+volumes:
+  shared_volume:

@@ -95,6 +95,9 @@ func (s *MongoContactStore) GetContactByID(ctx context.Context, id string) (*typ
 	}
 	var contact types.Contact
 	if err := s.coll.FindOne(ctx, bson.M{"_id": oid}).Decode(&contact); err != nil {
+		if err == mongo.ErrNoDocuments {
+			return nil, errors.New("contact not found")
+		}
 		return nil, err
 	}
 	return &contact, nil
