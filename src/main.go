@@ -55,6 +55,18 @@ func main() {
 			w.WriteHeader(http.StatusMethodNotAllowed)
 		}
 	})
+	mainMux.HandleFunc("/api/v1/healthz", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	})
+
+	mainMux.HandleFunc("/api/v1/readyz", func(w http.ResponseWriter, r *http.Request) {
+		err := client.Ping(context.Background(), nil)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		w.WriteHeader(http.StatusOK)
+	})
 	log.Println("Starting server on port 8080")
 	http.ListenAndServe(*listenAddrs, mainMux)
 }

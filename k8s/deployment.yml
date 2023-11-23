@@ -1,0 +1,33 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: agenda-api
+  namespace: agenda-api
+spec:
+  selector:
+    matchLabels:
+      app: agenda-api
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: agenda-api
+    spec:
+      containers:
+        - name: agenda-api
+          image: agenda-api:0.1.0
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 8080
+          livenessProbe:
+            httpGet:
+              path: /api/v1/healthz
+              port: 8080
+            initialDelaySeconds: 15
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /api/v1/readyz
+              port: 8080
+            initialDelaySeconds: 15
+            periodSeconds: 10

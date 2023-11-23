@@ -19,4 +19,6 @@ RUN cp /build/main .
 
 FROM scratch
 COPY --from=builder /dist/main /
+
+EXPOSE 8080
 ENTRYPOINT ["/main"]
