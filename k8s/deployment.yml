@@ -2,12 +2,13 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: agenda-api
-  namespace: agenda-api
+  labels:
+    app: agenda-api
 spec:
+  replicas: 1
   selector:
     matchLabels:
       app: agenda-api
-  replicas: 1
   template:
     metadata:
       labels:
@@ -15,10 +16,11 @@ spec:
     spec:
       containers:
         - name: agenda-api
-          image: agenda-api:0.1.0
-          imagePullPolicy: Never
+          image: rluisb/agenda-api:0.1.0
+          imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8080
+              name: http
           livenessProbe:
             httpGet:
               path: /api/v1/healthz
