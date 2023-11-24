@@ -22,7 +22,5 @@ RUN cp /build/main .
 FROM scratch
 COPY --from=builder /dist/main .
 
-ENV DB_CONN=mongodb://mongodb-0.mongodb.default.svc.cluster.local:27017/?ssl=false&authSource=admin
-
 EXPOSE 8080
 ENTRYPOINT ["/main"]

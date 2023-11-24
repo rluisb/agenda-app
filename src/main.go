@@ -21,9 +21,9 @@ func main() {
 	args := types.Args{
 		Conn: db.DBURI,
 	}
-	if conn := os.Getenv("DB_CONN"); conn != "" {
-		log.Printf("Using DB_CONN env variable: %s", conn)
-		args.Conn = conn
+	if conn := os.Getenv("MONGO_HOST"); conn != "" {
+		log.Printf("Using MONGO_HOST env variable: %s", conn)
+		args.Conn = "mongodb://" + conn + ":27017/?ssl=false&authSource=admin"
 	}
 
 	client, err := mongo.Connect(context.TODO(), options.Client().ApplyURI(args.Conn))

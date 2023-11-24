@@ -1,14 +1,41 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
+  name: agendadb
+  labels:
+    app: agendadb
+spec:
+  selector:
+    matchLabels:
+      app: agendadb
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: agendadb
+      name: agendadb-service
+
+    spec:
+      containers:
+        - image: mongo:latest
+          name: agendadb
+
+          ports:
+            - containerPort: 27017
+              name: agendadb
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
   name: agenda-api
   labels:
     app: agenda-api
 spec:
-  replicas: 1
   selector:
     matchLabels:
       app: agenda-api
+  replicas: 1
   template:
     metadata:
       labels:
@@ -17,19 +44,29 @@ spec:
       containers:
         - name: agenda-api
           image: rluisb/agenda-api:0.1.0
-          imagePullPolicy: IfNotPresent
+          imagePullPolicy: Always
           ports:
             - containerPort: 8080
-              name: http
           livenessProbe:
             httpGet:
               path: /api/v1/healthz
               port: 8080
-            initialDelaySeconds: 15
+            initialDelaySeconds: 10
             periodSeconds: 10
           readinessProbe:
             httpGet:
               path: /api/v1/readyz
               port: 8080
-            initialDelaySeconds: 15
+            initialDelaySeconds: 10
             periodSeconds: 10
+          env:
+            - name: MONGO_DB
+              valueFrom:
+                configMapKeyRef:
+                  name: agenda-db-config
+                  key: database
+            - name: MONGO_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: agenda-db-config
+                  key: host
