@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: agenda-config
+data:
+  host: {{ .Values.mongodb.host }}
+  port: {{ .Values.mongodb.port }}
+  database: {{ .Values.mongodb.dbName }}
+  collection: {{ .Values.mongodb.collection }}
+  username: {{ .Values.mongodb.username }}
+  password: {{ .Values.mongodb.password }}
+

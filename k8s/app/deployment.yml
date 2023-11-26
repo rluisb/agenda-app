@@ -1,0 +1,53 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: agenda-api
+spec:
+  selector:
+    matchLabels:
+      app: agenda-api
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: agenda-api
+    spec:
+      containers:
+        - name: agenda-api
+          image: rluisb/agenda-api:0.1.0
+          ports:
+            - containerPort: 8080
+              name: "http"
+          volumeMounts:
+            - mountPath: "/app"
+              name: agenda-api-source-code-storage
+          env:
+          - name: MONGO_DATABASE
+            configMapKeyRef:
+                key: MONGO_INITDB_DATABASE
+                name: mongodb-config
+          - name: MONGO_USERNAME
+            configMapKeyRef:
+                key: MONGO_INITDB_USERNAME
+                name: mongodb-config
+          - name: MONGO_PASSWORD
+            configMapKeyRef:
+                key: MONGO_INITDB_PASSWORD
+                name: mongodb-config
+          - name: MONGO_HOST
+            configMapKeyRef:
+                key: MONGO_HOST
+                name: mongodb-config
+          - name: MONGO_PORT
+            onfigMapKeyRef:
+                key: MONGO_PORT
+                name: mongodb-config
+          resources:
+            limits:
+              memory: 2Gi
+              cpu: "1"
+      volumes:
+        - name: agenda-api-source-code-storage
+          persistentVolumeClaim:
+            claimName: agenda-api-source-code-persisent-volume-claim
+        

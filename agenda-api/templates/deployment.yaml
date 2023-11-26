@@ -1,0 +1,113 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.deployment.api.appName }}
+spec:
+  selector:
+    matchLabels:
+      app: {{ .Values.deployment.api.appName }}
+  replicas: {{ .Values.replicaCount }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.deployment.api.appName }}
+    spec:
+      containers:
+        - name: {{ .Values.deployment.api.appName }}
+          image: "{{ .Values.deployment.api.image }}:{{ .Values.deployment.api.tag }}"
+          ports:
+            - containerPort: {{ .Values.deployment.api.port }}
+              name: {{ .Values.deployment.api.portName }}
+          volumeMounts:
+            - mountPath: {{ .Values.deployment.api.volumeMountPath }}
+              name: {{ .Values.deployment.api.volumeMountName }}
+          env:
+          - name: MONGO_DATABASE
+            configMapKeyRef:
+                key: MONGO_INITDB_DATABASE
+                name: mongodb-config
+          - name: MONGO_USERNAME
+            configMapKeyRef:
+                key: MONGO_INITDB_USERNAME
+                name: mongodb-config
+          - name: MONGO_PASSWORD
+            configMapKeyRef:
+                key: MONGO_INITDB_PASSWORD
+                name: mongodb-config
+          - name: MONGO_HOST
+            configMapKeyRef:
+                key: MONGO_HOST
+                name: mongodb-config
+          - name: MONGO_PORT
+            onfigMapKeyRef:
+                key: MONGO_PORT
+                name: mongodb-config
+          resources:
+            limits:
+              memory: 2Gi
+              cpu: "1"
+      volumes:
+        - name: {{ .Values.deployment.api.volumeMountName }}
+          persistentVolumeClaim:
+            claimName: {{ .Values.persistentVolumeClaim.api.name}}
+
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.deployment.db.dbName }}
+  labels:
+    app: {{ .Values.deployment.db.dbName }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ .Values.deployment.db.dbName }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.deployment.db.dbName }}
+    spec:
+      containers:
+      - name: {{ .Values.deployment.db.dbName }}
+        image: "{{ .Values.deployment.db.image }}:{{ .Values.deployment.db.tag }}"
+        ports:
+        - containerPort: {{ .Values.deployment.db.port }}
+          name: {{ .Values.deployment.db.portName }}
+       volumeMounts:
+          - mountPath: {{ .Values.deployment.db.volumeMountPath }}
+            name: {{ .Values.deployment.db.volumeMountName }}
+        resources:
+            limits:
+              memory: 4Gi
+              cpu: "2"
+        env:
+        - name: MONGO_INITDB_ROOT_USERNAME
+          valueFrom:
+            configMapKeyRef:
+              key: MONGO_INITDB_ROOT_USERNAME
+              name: mongodb-config
+        - name: MONGO_INITDB_ROOT_PASSWORD
+          configMapKeyRef:
+              key: MONGO_INITDB_ROOT_PASSWORD
+              name: mongodb-config
+        - name: MONGO_INITDB_DATABASE
+          configMapKeyRef:
+              key: MONGO_INITDB_DATABASE
+              name: mongodb-config
+        - name: MONGO_INITDB_USERNAME
+          configMapKeyRef:
+              key: MONGO_INITDB_USERNAME
+              name: mongodb-config
+        - name: MONGO_INITDB_PASSWORD
+          configMapKeyRef:
+              key: MONGO_INITDB_PASSWORD
+              name: mongodb-config
+      volumes:
+        - name: {{ .Values.deployment.db.volumeMountName }}
+          persistentVolumeClaim:
+            claimName: {{ .Values.persistentVolumeClaim.db.name}}
+
+        
+        

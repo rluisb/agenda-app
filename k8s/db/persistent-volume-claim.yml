@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: agenda-db-mongo-data-persistent-volume-claim
+spec:
+  volumeName: agenda-db-mongo-data-persistent-volume
+  storageClassName: manual
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi

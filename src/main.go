@@ -19,12 +19,27 @@ func main() {
 	flag.Parse()
 
 	args := types.Args{
-		Conn: db.DBURI,
+		Conn: "mongodb://",
 	}
-	if conn := os.Getenv("MONGO_HOST"); conn != "" {
-		log.Printf("Using MONGO_HOST env variable: %s", conn)
-		args.Conn = "mongodb://" + conn + ":27017/?ssl=false&authSource=admin"
+	if user := os.Getenv("MONGODB_USER"); user != "" {
+		log.Printf("Using MONGODB_USER env variable: %s", user)
+		args.Conn += user
 	}
+	if password := os.Getenv("MONGODB_PASSWORD"); password != "" {
+		log.Printf("Using MONGODB_PASSWORD env variable: %s", password)
+		args.Conn += ":" + password + "@"
+	}
+	if host := os.Getenv("MONGODB_HOST"); host != "" {
+		log.Printf("Using MONGODB_HOST env variable: %s", host)
+		args.Conn += host
+	}
+	if port := os.Getenv("MONGODB_PORT"); port != "" {
+		log.Printf("Using MONGODB_PORT env variable: %s", port)
+		args.Conn += ":" + port
+	}
+
+	args.Conn += "/?ssl=false&authSource=admin"
+	log.Printf("Connecting to db with: %s", args.Conn)
 
 	client, err := mongo.Connect(context.TODO(), options.Client().ApplyURI(args.Conn))
 	if err != nil {

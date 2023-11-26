@@ -1,9 +1,0 @@
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: agenda-db-config
-  labels:
-    app: agendadb
-data:
-  host: agendadb-service
-  database: agenda

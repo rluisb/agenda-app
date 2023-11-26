@@ -1,0 +1,57 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: agenda-db
+  labels:
+    app: agenda-db
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: agenda-db
+  template:
+    metadata:
+      labels:
+        app: agenda-db
+    spec:
+      containers:
+      - name: agenda-db
+        image: mongo
+        ports:
+        - containerPort: 27017
+          name: mongo
+        volumeMounts:
+        - name: agenda-db-mongo-data-persistent-volume
+          mountPath: /data/db
+        resources:
+            limits:
+              memory: 4Gi
+              cpu: "2"
+        env:
+        - name: MONGO_INITDB_ROOT_USERNAME
+          valueFrom:
+            configMapKeyRef:
+              key: MONGO_INITDB_ROOT_USERNAME
+              name: mongodb-config
+        - name: MONGO_INITDB_ROOT_PASSWORD
+          configMapKeyRef:
+              key: MONGO_INITDB_ROOT_PASSWORD
+              name: mongodb-config
+        - name: MONGO_INITDB_DATABASE
+          configMapKeyRef:
+              key: MONGO_INITDB_DATABASE
+              name: mongodb-config
+        - name: MONGO_INITDB_USERNAME
+          configMapKeyRef:
+              key: MONGO_INITDB_USERNAME
+              name: mongodb-config
+        - name: MONGO_INITDB_PASSWORD
+          configMapKeyRef:
+              key: MONGO_INITDB_PASSWORD
+              name: mongodb-config
+      volumes:
+      - name: agenda-db-mongo-data-persistent-volume
+        persistentVolumeClaim:
+          claimName: agenda-db-mongo-data-persistent-volume-claim
+
+        

@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"log"
+	"os"
 	"time"
 
 	"github.com/rluisb/agenda-app/src/helper"
@@ -14,7 +15,11 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-const contactColl = "contacts"
+
+var (
+	DBNAME = os.Getenv("MONGODB_DBNAME")
+	COLLECTION = os.Getenv("MONGODB_COLLECTION")
+)
 
 type ContactStore interface {
 	GetContactByID(context.Context, string) (*types.Contact, error)
@@ -32,7 +37,7 @@ type MongoContactStore struct {
 }
 
 func NewMongoContactStore(client *mongo.Client) *MongoContactStore {
-	collection  := client.Database(DBNAME).Collection(contactColl)
+	collection  := client.Database(DBNAME).Collection(COLLECTION)
 	namePhoneEmailIndex := mongo.IndexModel{
     Keys: bson.D{
         {"name", 1},
