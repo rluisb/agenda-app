@@ -16,19 +16,20 @@ spec:
       containers:
         - name: agenda-api
           image: {{ .Values.api.deployment.image }}:{{ .Values.api.deployment.tag }}
+          imagePullPolicy: {{ .Values.api.deployment.imagePullPolicy }}
           ports:
             - containerPort: {{ .Values.api.deployment.port }}
               name: {{ .Values.api.deployment.portName }}
           env:
-          - name: MONGO_DATABASE
+          - name: MONGODB_DBNAME
             value: {{ .Values.configMap.data.MONGO_INITDB_DATABASE }}
-          - name: MONGO_USERNAME
+          - name: MONGODB_USER
             value: {{ .Values.configMap.data.MONGO_INITDB_USERNAME }}
-          - name: MONGO_PASSWORD
+          - name: MONGODB_PASSWORD
             value: {{ .Values.configMap.data.MONGO_INITDB_PASSWORD }}
-          - name: MONGO_HOST
-            value: {{ .Release.Name }}-db.{{ .Values.namespace }}.svc.cluster.local
-          - name: MONGO_PORT
+          - name: MONGODB_HOST
+            value: {{ .Release.Name }}-db-mongo
+          - name: MONGODB_PORT
             value: "{{ .Values.configMap.data.MONGO_PORT }}"
           
           resources:

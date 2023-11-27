@@ -3,17 +3,10 @@ mongo:
   deployment:
     tag: latest
     port: 27017
-    volumeMounts:
-      - name: agenda-db-mongo-data-persistent-volume
-        mountPath: /data/db
     resources:
       limits:
         memory: 4Gi
         cpu: "2"
-    volumes:
-      - name: agenda-db-mongo-data-persistent-volume
-        persistentVolumeClaim:
-          claimName: agenda-db-mongo-data-persistent-volume-claim
   service:
     type: NodePort
     protocol: TCP
@@ -44,6 +37,7 @@ api:
     port: 8080
     portName: "http"
     serviceType: LoadBalancer
+    imagePullPolicy: Always
     volume:
       name: source-code-storage
       mountPath: /app

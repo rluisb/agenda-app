@@ -18,8 +18,9 @@ import (
 
 var (
 	DBNAME = os.Getenv("MONGODB_DBNAME")
-	COLLECTION = os.Getenv("MONGODB_COLLECTION")
 )
+
+const COLLECTION = "contacts"
 
 type ContactStore interface {
 	GetContactByID(context.Context, string) (*types.Contact, error)
