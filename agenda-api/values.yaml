@@ -1,130 +1,70 @@
-replicaCount: 1
-
-deployment:
-  api:
-    appName: agenda-api
-    image: rluisb/agenda-api
-    tag: "0.1.0"
-    port: 8080
-    portName: "http"
-    volumeMountPath: "/app"
-    volumeMountName: "agenda-api-source-code-storage"
-  db:
-    dbName: agenda-db
-    image: mongo
+namespace: agenda
+mongo:
+  deployment:
     tag: latest
     port: 27017
-    portName: "http"
-    volumeMountPath: "/data/db"
-    volumeMountName: "agenda-db-mongo-data-storage "          
-
-
-persistentVolume:
-  api:
-    name: "agenda-api-source-code-persistent-volume"
+    volumeMounts:
+      - name: agenda-db-mongo-data-persistent-volume
+        mountPath: /data/db
+    resources:
+      limits:
+        memory: 4Gi
+        cpu: "2"
+    volumes:
+      - name: agenda-db-mongo-data-persistent-volume
+        persistentVolumeClaim:
+          claimName: agenda-db-mongo-data-persistent-volume-claim
+  service:
+    type: NodePort
+    protocol: TCP
+    port: 27017
+    targetPort: 27017
+    nodePort: 30017
+  persistentVolume:
+    name: mongo-data-persistent-volume
+    type: local
     storageClassName: manual
     capacity:
       storage: 5Gi
-    accessModes: 
-     - ReadWriteOnce
-    hostPath:
-      path: "/home/ricardo/Documents/personal/agenda-app/api"
-  db:
-    name: agenda-db-mongo-data-persistent-volume
- 
-    storageClassName: manual
-    capacity:
-      storage: 5Gi
-    accessModes:
-      - ReadWriteOnce
-    hostPath:
+    accessModes: ["ReadWriteOnce"]
+    host: 
       path: "/home/ricardo/Documents/personal/agenda-app/mongo-data"
-
-persistentVolumeClaim:
-  api:
-    name: "agenda-api-source-code-persistent-volume-claim"
+      type: DirectoryOrCreate
+  persistentVolumeClaim:
+    name: mongo-data-persistent-volume-claim
     storageClassName: manual
-    accessModes:
-      - ReadWriteOnce
+    accessModes: ["ReadWriteOnce"]
     resources:
       requests:
         storage: 5Gi
-  db:
-    name: agenda-db-mongo-data-persistent-volume-claim
-    storageClassName: manual
-    accessModes:
-      - ReadWriteOnce
-    resources:
-      requests:
-        storage: 5Gi
-
-service:
-  api:
-    name: agenda-api-service
+api:
+  deployment:
+    tag: "0.1.0"
+    image: rluisb/agenda-api
+    port: 8080
+    portName: "http"
+    serviceType: LoadBalancer
+    volume:
+      name: source-code-storage
+      mountPath: /app
+  service:
+    portName: "http"
     type: NodePort
-    selector:
-      app: agenda-api
-    port:
-      name: "http"
-      protocol: TCP
-      number: 80
-      targetPort: 8080
-      nodePort: 30000
-  db:
-    name: agenda-db-service
-    type: NodePort
-    selector:
-      app: agenda-db
-    port:
-      protocol: TCP
-      number: 27017
-      targetPort: 27017
-      nodePort: 30017
+    protocol: TCP
+    port: 80
+    targetPort: 8080
+    nodePort: 30000
+  ingress:
+    enabled: false
+    imageClassName: nginx
+    hosts: ["10.102.66.15.nip.io"]
 
-mongodb:
-  host: agenda-db-service
-  port: 27017
-  dbName: agenda
-  username: agenda
-  password: agenda
-  collection: contacts
-  rootUserName: root
-  rootPassword: root
-
-serviceAccount:
-  create: true
-  annotations: {}
-  name: ""
-
-podAnnotations: {}
-
-podSecurityContext: {}
-
-securityContext: {}
-
-ingress:
-  enabled: false
-  className: ""
-  annotations: {}
-  hosts:
-    - host: chart-example.local
-      paths:
-        - path: /
-          pathType: ImplementationSpecific
-  tls: []
-resources: {}
-
-autoscaling:
-  enabled: false
-  minReplicas: 1
-  maxReplicas: 100
-  targetCPUUtilizationPercentage: 80
-
-nodeSelector: {}
-
-tolerations: []
-
-affinity: {}
-
-
-
+configMap:
+  data:
+    MONGO_INITDB_ROOT_USERNAME: root
+    MONGO_INITDB_ROOT_PASSWORD: root
+    MONGO_INITDB_DATABASE: agenda
+    MONGO_INITDB_USERNAME: agenda
+    MONGO_INITDB_PASSWORD: agenda
+    MONGO_PORT: "27017"
+    

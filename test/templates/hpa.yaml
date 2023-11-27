@@ -2,14 +2,14 @@
 apiVersion: autoscaling/v2beta1
 kind: HorizontalPodAutoscaler
 metadata:
-  name: {{ include "agenda-api.fullname" . }}
+  name: {{ include "test.fullname" . }}
   labels:
-    {{- include "agenda-api.labels" . | nindent 4 }}
+    {{- include "test.labels" . | nindent 4 }}
 spec:
   scaleTargetRef:
     apiVersion: apps/v1
     kind: Deployment
-    name: {{ include "agenda-api.fullname" . }}
+    name: {{ include "test.fullname" . }}
   minReplicas: {{ .Values.autoscaling.minReplicas }}
   maxReplicas: {{ .Values.autoscaling.maxReplicas }}
   metrics:

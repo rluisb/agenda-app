@@ -1,0 +1,37 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: agenda
+  name: {{ .Release.Name }}-api
+spec:
+  selector:
+    matchLabels:
+      app: {{ .Release.Name }}-api
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: {{ .Release.Name }}-api
+    spec:
+      containers:
+        - name: agenda-api
+          image: {{ .Values.api.deployment.image }}:{{ .Values.api.deployment.tag }}
+          ports:
+            - containerPort: {{ .Values.api.deployment.port }}
+              name: {{ .Values.api.deployment.portName }}
+          env:
+          - name: MONGO_DATABASE
+            value: {{ .Values.configMap.data.MONGO_INITDB_DATABASE }}
+          - name: MONGO_USERNAME
+            value: {{ .Values.configMap.data.MONGO_INITDB_USERNAME }}
+          - name: MONGO_PASSWORD
+            value: {{ .Values.configMap.data.MONGO_INITDB_PASSWORD }}
+          - name: MONGO_HOST
+            value: {{ .Release.Name }}-db.{{ .Values.namespace }}.svc.cluster.local
+          - name: MONGO_PORT
+            value: "{{ .Values.configMap.data.MONGO_PORT }}"
+          
+          resources:
+            limits:
+              memory: 4Gi
+              cpu: "2"

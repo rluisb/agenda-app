@@ -1,0 +1,21 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  namespace: {{ .Values.namespace  }}
+  name: {{ .Release.Name }}-{{ .Values.mongo.persistentVolume.name }}
+  labels:
+    type: {{ .Values.mongo.persistentVolume.type }}
+spec:
+  claimRef:
+    namespace: {{ .Values.namespace  }}
+    name: {{ .Release.Name }}-{{ .Values.mongo.persistentVolumeClaim.name }}
+  storageClassName: {{ .Values.mongo.persistentVolume.storageClassName }}
+  capacity:
+    storage: {{ .Values.mongo.persistentVolume.capacity.storage  }}
+  {{- with .Values.mongo.persistentVolume.accessModes }}
+  accessModes:
+    {{- toYaml . | nindent 8 }}
+  {{- end }}
+  hostPath:
+    path: {{ .Values.mongo.persistentVolume.host.path }}
+    type: {{ .Values.mongo.persistentVolume.host.type }}

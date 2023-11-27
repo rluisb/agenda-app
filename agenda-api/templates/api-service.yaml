@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  namespace: {{ .Values.namespace }}
+  name: {{ .Release.Name }}-service
+spec:
+  type: {{ .Values.api.service.type }}
+  selector:
+    app: {{ .Release.Name }}
+  ports:
+    - name: {{ .Values.api.service.portName }}
+      protocol: {{ .Values.api.service.protocol }}
+      port: {{ .Values.api.service.port }}
+      targetPort: {{ .Values.api.service.targetPort }}
+      nodePort: {{ .Values.api.service.nodePort }}

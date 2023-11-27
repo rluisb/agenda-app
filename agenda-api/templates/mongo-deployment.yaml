@@ -1,0 +1,47 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-db
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: {{ .Release.Name }}-db
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ .Release.Name }}-db
+  template:
+    metadata:
+      labels:
+        app: {{ .Release.Name }}-db
+    spec:
+      containers:
+      - name: agenda-db
+        image: mongo:{{ .Values.mongo.deployment.tag }}
+        ports:
+        - containerPort: {{ .Values.mongo.deployment.port }}
+          name: mongo
+        volumeMounts:
+        - name: {{ .Release.Name }}-{{ .Values.mongo.persistentVolume.name }}
+          mountPath: /data/db
+        {{- with .Values.mongo.deployment.resources }}
+        resources:
+          {{- toYaml . | nindent 8 }}
+        {{- end }}
+        env:
+        - name: MONGO_INITDB_ROOT_USERNAME
+          value: {{ .Values.configMap.data.MONGO_INITDB_ROOT_USERNAME }}
+        - name: MONGO_INITDB_ROOT_PASSWORD
+          value: {{ .Values.configMap.data.MONGO_INITDB_ROOT_PASSWORD }}
+        - name: MONGO_INITDB_DATABASE
+          value: {{ .Values.configMap.data.MONGO_INITDB_DATABASE }}
+        - name: MONGO_INITDB_USERNAME
+          value: {{ .Values.configMap.data.MONGO_INITDB_USERNAME }}
+        - name: MONGO_INITDB_PASSWORD
+          value: {{ .Values.configMap.data.MONGO_INITDB_PASSWORD }}
+      volumes:
+        - name: {{ .Release.Name }}-{{ .Values.mongo.persistentVolume.name }}
+          persistentVolumeClaim:
+            claimName: {{ .Release.Name }}-{{ .Values.mongo.persistentVolumeClaim.name }}
+
+        
