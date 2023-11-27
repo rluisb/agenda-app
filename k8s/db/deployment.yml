@@ -2,6 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: agenda-db
+  namespace: agenda
   labels:
     app: agenda-db
 spec:

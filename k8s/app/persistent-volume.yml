@@ -1,6 +1,7 @@
 apiVersion: v1
 kind: PersistentVolume
 metadata:
+  namespace: agenda
   name: agenda-api-source-code-persisent-volume
   labels:
     type: local

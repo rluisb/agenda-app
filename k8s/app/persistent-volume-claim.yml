@@ -1,6 +1,7 @@
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
+  namespace: agenda
   name: agenda-api-source-code-persisent-volume-claim
 spec:
   volumeName: agenda-api-source-code-persisent-volume

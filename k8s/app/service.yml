@@ -1,6 +1,7 @@
 apiVersion: v1
 kind: Service
 metadata:
+  namespace: agenda
   name: agenda-api-service
 spec:
   type: NodePort

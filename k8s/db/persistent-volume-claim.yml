@@ -1,6 +1,7 @@
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
+  namespace: agenda
   name: agenda-db-mongo-data-persistent-volume-claim
 spec:
   volumeName: agenda-db-mongo-data-persistent-volume
